@@ -1,11 +1,15 @@
 const http = require('node:http');
 const express = require('express');
 const { tasks } = require('./datas');
-const { v4: uuidv4 } = require("uuid")
-const app = express()
+const { v4: uuidv4 } = require("uuid");
+const app = express();
+const routes = require('./tables/authRouter');
+const isAuthenticate = require('./tables/authRouter')
+
 
 const port = 3000;
 const dateCreated = new Date();
+
 
 // Lancer le serveur sur le port 3000
 app.listen(port, () => {
@@ -13,24 +17,25 @@ app.listen(port, () => {
 })
 
 // Décrypter les données en json
-app.use(express.json())
+app.use(express.json());
 // Décoder les données reçues des formulaires HTML
-app.use(express.urlencoded({ extended: true })) 
+app.use(express.urlencoded({ extended: true }));
+
+app.use('/api/auth', routes);
 
 
 // Recuperer tous les taches contenues dans le stockage en memoire
-app.get('/api/tasks', (req, res) => {
+app.get('/api/tasks', isAuthenticate, (req, res) => {
   // status 200 pour montrer que la requete est reussie et l'afficher sous format JSON
   res.status(200).json({ 
     message: "Tous les taches chargées avec succès", 
     tasks: tasks 
   });
-
-})
+});
 
 
 // Recuperer une tache specifique avec son ID
-app.get('/api/tasks/:id', (req, res) => {
+app.get('/api/tasks/:id', isAuthenticate, (req, res) => {
   // Filtrer les taches pour recupere la tache avec l'ID specifier en parametre
   const taskId = tasks.filter( (task) => task.id === req.params.id)
   if (taskId.length !== 0){
@@ -44,9 +49,8 @@ app.get('/api/tasks/:id', (req, res) => {
 })
 
 
-
 // Ajouter une nouvelle tache
-app.post("/api/tasks", (req, res) => {
+app.post("/api/tasks", isAuthenticate, (req, res) => {
   // Ajouter la tache de maniere fictif dans datas.js
   tasks.push(
     {
@@ -72,7 +76,7 @@ app.post("/api/tasks", (req, res) => {
 
 
 // Mettre a jour une tache specifique avec son ID
-app.put("/api/tasks/:id", (req, res) => {
+app.put("/api/tasks/:id", isAuthenticate, (req, res) => {
   const idParam = req.params.id;
   // Recuperer la tache a mettre a jour en utilisant la methode find
   let taskUpdated = tasks.find((task) => task.id === idParam);
@@ -99,7 +103,8 @@ app.put("/api/tasks/:id", (req, res) => {
 
 
 // Supprimer un tache specifique avec son ID
-app.delete("/api/tasks/:id", (req, res) => {
+// isAuthenticate pour verfier si l'utilisateur est connecté
+app.delete("/api/tasks/:id", isAuthenticate, (req, res) => {
   const idParam = req.params.id;
   const taskDelete = tasks.find((task) => task.id === idParam);
   // Supprimer la tache est trouve avec filter s'il est trouve
